@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail Produk</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    
+    <!--NAVIGATION-->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light py-3 fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">JaketPedia</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ml-auto ">
+              <li class="nav-item">
+                <a class="nav-link" href="Home.html">Home</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">Shop</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">About</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">Blog</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">Contact Us</a>
+              </li>
+              <li class="nav-item">
+                <i class="fa fa-search"></i>
+                <a href="keranjang.html"><i class="fa fa-shopping-cart"></i></a>
+              </li>
+            </ul>
+          </div>
+        </div>
+    </nav>
+
+    <section class="container sproduct my-5 pt-5">
+        <div class="row mt-5" id="app">
+            <div class="col-lg-5 col-md-12 col-12">
+                <img class="img-fluid w-95" src="img/denimshacket.png" width="350" height="109">
+            </div>
+            <div class="col-lg-7 col-md-12 col-12">
+                <div class="col-lg-6 col-md-12 col-12">
+                    <h3>Denim Shacket</h3>
+                    <h2>Rp 255.000</h2>
+                    <h5>stok : {{ product.stock }}</h5>
+                    <select class="my-1">
+                        <option>Select Size</option>
+                        <option>XL</option>
+                        <option>L</option>
+                        <option>M</option>
+                    </select>
+                    <div class="order-detail">
+                        <input type="number" v-model.number="product.qty" @input="updateStock" min="1" :max="product.stock" /> <br>
+                        Harga = {{ diproses }} <br>
+                        <hr>
+                        <div class="detail">
+                            <p v-if="product.qty >= product.stock">Maaf stok terbatas</p>
+                            <p v-else-if="product.qty >= 5">kamu dapat potongan harga</p>
+                            <p v-else>Beli lebih banyak lagi untuk dapatkan bonus</p>
+                        </div>
+                        <h4>{{ product.name }}</h4>
+                        <div v-text="product.content"></div>
+                        <div>
+                            <hr>
+                            <button @click="isianCart">Pesan sekarang</button>
+                            <button @click="clear">Clear</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <script>
+        var app = new Vue({
+            el: "#app",
+            data: {
+                product: {
+                    content: "Cotton denim shacket with a collar, press-studs down the front and patch front pockets, one with a fabric appliqué.",
+                    name: "Denim Shacket",
+                    price: 255000,
+                    qty: 1,
+                    stock: 8,
+                    image: "img/denimshacket.png"
+                }
+            },
+            created() {
+                let stock = JSON.parse(localStorage.getItem('stock')) || {};
+                if (stock[this.product.name]) {
+                    this.product.stock = stock[this.product.name];
+                } else {
+                    stock[this.product.name] = this.product.stock;
+                    localStorage.setItem('stock', JSON.stringify(stock));
+                }
+            },
+            computed: {
+                diproses() {
+                    return this.product.qty * this.product.price;
+                }
+            },
+            methods: {
+                updateStock() {
+                    if (this.product.qty > this.product.stock) {
+                        this.product.qty = this.product.stock;
+                    }
+                },
+                isianCart() {
+                    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+                    let existingIndex = cart.findIndex(item => item.name === this.product.name);
+                    if (existingIndex !== -1) {
+                        cart[existingIndex].qty += this.product.qty;
+                    } else {
+                        cart.push({ ...this.product });
+                    }
+                    localStorage.setItem('cart', JSON.stringify(cart));
+                    this.product.stock -= this.product.qty;
+                    this.updateLocalStorageStock();
+                    this.product.qty = 1;
+
+                    // Menampilkan SweetAlert setelah pemesanan
+                    swal({
+                        title: "Pesanan Berhasil!",
+                        text: "Produk telah ditambahkan ke keranjang.",
+                        icon: "success",
+                        button: "OK",
+                    });
+                },
+                updateLocalStorageStock() {
+                    let stock = JSON.parse(localStorage.getItem('stock')) || {};
+                    stock[this.product.name] = this.product.stock;
+                    localStorage.setItem('stock', JSON.stringify(stock));
+                },
+                clear() {
+                    localStorage.clear();
+                }
+            }
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
+</body>
+</html>
